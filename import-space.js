@@ -1,15 +1,16 @@
+const args = process.argv.slice(2);
 
 /**
  * Destination space management api key. It identifies DecisionRules space
  * @type {string}
  */
-const DEST_SPACE_MANAGEMENT_APIKEY = process.env.DEST_SPACE_MANAGEMENT_APIKEY;
+const DEST_SPACE_MANAGEMENT_APIKEY = process.env.DEST_SPACE_MANAGEMENT_APIKEY || args[2];
 
 /**
  * Source DecisionRules environment url. Example: // example: https://api.decisionrules.io
  * @type {string}
  */
-const DEST_ENV_URL = process.env.DEST_ENV_URL;
+const DEST_ENV_URL = process.env.DEST_ENV_URL || args[1];
 
 
 // START

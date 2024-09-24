@@ -1,23 +1,25 @@
 const fs = require('fs');
+const args = process.argv.slice(2);
 
 /**
  * Source space management api key. It identifies DecisionRules space
  * @type {string}
  */
-const SOURCE_SPACE_MANAGEMENT_APIKEY = process.env.SOURCE_SPACE_MANAGEMENT_APIKEY;
+const SOURCE_SPACE_MANAGEMENT_APIKEY = process.env.SOURCE_SPACE_MANAGEMENT_APIKEY || args[2];
 
 /**
  * Source DecisionRules environment url. Example: // example: https://api.decisionrules.io
  * @type {string}
  */
-const SOURCE_ENV_URL = process.env.SOURCE_ENV_URL;
+const SOURCE_ENV_URL = process.env.SOURCE_ENV_URL || args[1];
+
+
+
 
 
 // START
 (async () => {
     try {
-
-        const args = process.argv.slice(2);
         const exportFilePath = args[0]
 
 
