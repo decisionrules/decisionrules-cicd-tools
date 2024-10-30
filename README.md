@@ -1,4 +1,4 @@
-### DecisionRules.io CICD Tools
+# DecisionRules.io CICD Tools
 
 DecisionRules, the Business Rules Engine, enables connection to CICD Pipelines and thus enables easy involvement in DevOps processes of medium and larger organizations.
 
@@ -9,7 +9,7 @@ A sample implementation of the CICD pipeline and basic processes can be found
 in [Azure DevOps CICD Pipelines](https://github.com/decisionrules/decisionrules-cicd-tools.git)
 
 
-## Common use-cases
+## Common Use-Cases
 - Move one Space to another
 - Move space to another environment
 - Backup space to Git repository
@@ -33,6 +33,7 @@ in [Azure DevOps CICD Pipelines](https://github.com/decisionrules/decisionrules-
 - Installed Node 16+
 - ```git clone https://github.com/decisionrules/decisionrules-cicd-tools```
 - Tested on Ubuntu 22.04 LTS, but it will probably run on any linux/max/windows machine
+- DecisionRules [Management API Key](https://docs.decisionrules.io/doc/api/api-keys/management-api-keys)
 
 
 ### Export Space
@@ -65,7 +66,7 @@ node import-space.js file_to_import.json https://api.decisionrules.io 4asd654sa6
 
 
 
-# Azure DevOps Example
+### Azure DevOps Example
 [Azure DevOps Documentation](https://docs.decisionrules.io/doc/on-premise-docker/cd-ci-pipelines/azure-devops-cicd-pipelines)
 ```
 trigger: none
