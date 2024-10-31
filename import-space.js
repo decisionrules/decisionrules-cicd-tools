@@ -15,29 +15,36 @@ const DEST_ENV_URL = process.env.DEST_ENV_URL || args[1];
 
 // START
 (async () => {
-    const args = process.argv.slice(2);
-    const importFilePath = args[0]
 
-    if (!importFilePath) {
-        console.log('Please specify file to import.')
-    } else {
-        console.log('Importing from file:', importFilePath)
+    try {
+        const args = process.argv.slice(2);
+        const importFilePath = args[0]
+
+        if (!importFilePath) {
+            console.log('Please specify file to import.')
+            process.exit(-1)
+        } else {
+            console.log('Importing from file:', importFilePath)
+        }
+
+        if (!DEST_ENV_URL) {
+            console.error("Set ENV variable SOURCE_ENV_URL. Example: https://api.decisionrules.io");
+            process.exit(-1)
+        }
+
+        if (!DEST_SPACE_MANAGEMENT_APIKEY) {
+            console.error("Set ENV variable SOURCE_SPACE_APIKEY.");
+            process.exit(-1)
+        }
+
+        const rf = await import('fs/promises');
+        const jsonString = ((await rf.readFile(importFilePath)).toString('utf8'))
+
+        return await importSpace(DEST_SPACE_MANAGEMENT_APIKEY, jsonString);
+    } catch (e) {
+        console.error('Error:', e)
+        process.exit(-1)
     }
-
-    if (!DEST_ENV_URL) {
-        console.error("Set ENV variable SOURCE_ENV_URL. Example: https://api.decisionrules.io");
-        return
-    }
-
-    if (!DEST_SPACE_MANAGEMENT_APIKEY) {
-        console.error("Set ENV variable SOURCE_SPACE_APIKEY.");
-        return
-    }
-
-    const rf= await import('fs/promises');
-    const jsonString = ((await rf.readFile(importFilePath)).toString('utf8'))
-
-    return await importSpace(DEST_SPACE_MANAGEMENT_APIKEY, jsonString);
 })();
 
 
@@ -63,7 +70,6 @@ async function importSpace(destinationSpaceApiKey, importJsonData) {
 
         const createdFolderIdObject = await importResponse.json()
         const createdFolderId = createdFolderIdObject.folderNode
-        console.log(createdFolderIdObject)
 
         // Get Folder Structure of created Node
         const folderStructureResponse = await fetch(url + createdFolderId, {
@@ -74,7 +80,7 @@ async function importSpace(destinationSpaceApiKey, importJsonData) {
             }
         })
 
-        console.log('get folder structure DONE')
+        console.log('Getting folder structure DONE')
         // Convert response to json
         const FolderStructure = await folderStructureResponse.json()
 
@@ -116,7 +122,7 @@ async function importSpace(destinationSpaceApiKey, importJsonData) {
     }
     catch(e) {
         console.error(`Error occurred during migration: ${e.message}`)
-        return -1
+        throw e
     }
 }
 

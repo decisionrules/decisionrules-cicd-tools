@@ -19,17 +19,20 @@ const DEST_ENV_URL = process.env.DEST_ENV_URL || args[0];
     try {
         if (!DEST_ENV_URL) {
             console.error("Set ENV variable SOURCE_ENV_URL. Example: https://api.decisionrules.io");
-            return
+            process.exit(-1)
         }
 
         if (!DEST_SPACE_MANAGEMENT_APIKEY) {
             console.error("Set ENV variable SOURCE_SPACE_APIKEY.");
-            return
+            process.exit(-1)
         }
 
-        return await clearSpace(DEST_SPACE_MANAGEMENT_APIKEY);
+        await clearSpace(DEST_SPACE_MANAGEMENT_APIKEY);
+        return 0
+
     } catch(e) {
         console.error('Error:', e)
+        process.exit(-1)
     }
 })();
 
@@ -41,7 +44,6 @@ const DEST_ENV_URL = process.env.DEST_ENV_URL || args[0];
  */
 async function clearSpace(sourceSpaceApiKey) {
     // Create URL
-    try {
         console.log('Clearing destination space')
         const url = `${DEST_ENV_URL}/api/folder/root?deleteAll=true`;
         // Export old Space contents
@@ -53,19 +55,12 @@ async function clearSpace(sourceSpaceApiKey) {
             }
         })
 
-        if (response.status === 200) {
+        if (response.ok) {
             console.log('Destination space cleared')
-            return 0
         }
         else {
-            throw Error(`Error occurred during clear space: ${response.status} ${response.statusText}`)
+            throw Error(`Error occurred during clearing the space: ${response.status} ${response.statusText}`)
         }
-
-    }
-    catch(e) {
-        console.error(`Error occurred during clearing space: ${e.message}`)
-        throw e
-    }
 }
 
 

@@ -26,6 +26,7 @@ const SOURCE_ENV_URL = process.env.SOURCE_ENV_URL || args[1];
         // check that export file path is specified
         if (!exportFilePath) {
             console.log('Please specify export file path')
+            process.exit(-1)
         } else {
             console.log('Exporting to file:', exportFilePath)
         }
@@ -33,12 +34,12 @@ const SOURCE_ENV_URL = process.env.SOURCE_ENV_URL || args[1];
 
         if (!SOURCE_ENV_URL) {
             console.error("Set ENV variable SOURCE_ENV_URL. Example: https://api.decisionrules.io");
-            return
+            process.exit(-1)
         }
 
         if (!SOURCE_SPACE_MANAGEMENT_APIKEY) {
             console.error("Set ENV variable SOURCE_SPACE_APIKEY.");
-            return
+            process.exit(-1)
         }
 
         const exportedSpace = await exportSpace(SOURCE_SPACE_MANAGEMENT_APIKEY);
@@ -46,16 +47,14 @@ const SOURCE_ENV_URL = process.env.SOURCE_ENV_URL || args[1];
         console.log('Export successfully written to file:', exportFilePath)
         return 0
     } catch(e) {
-        console.error('Error:', e)
-        return -1
+        console.error('Error :', e)
+        process.exit(-1)
     }
-
 })();
 
 
 async function exportSpace(sourceSpaceApiKey) {
     // Create URL
-    try {
         const url = `${SOURCE_ENV_URL}/api/folder/`;
 
         // Export old Space contents
@@ -67,13 +66,12 @@ async function exportSpace(sourceSpaceApiKey) {
             }
         })
 
+        if (!exportResponse.ok) {
+            throw new Error(`Failed to download folder: ${exportResponse.body} ${exportResponse.statusText}  ${exportResponse.status}`)
+        }
+
         // Convert response to json
         return await exportResponse.json()
-    }
-    catch(e) {
-        console.error(`Error occurred during migration: ${e.message}`)
-        return -1
-    }
 }
 
 
