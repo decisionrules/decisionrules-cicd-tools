@@ -69,8 +69,12 @@ async function importSpace(destinationSpaceApiKey, importJsonData) {
 
 
         const createdFolderIdObject = await importResponse.json()
+        console.log('import response')
+        console.log(createdFolderIdObject)
         const createdFolderId = createdFolderIdObject.folderNode
-
+        console.log('folder id')
+        console.log(createdFolderId)
+        
         // Get Folder Structure of created Node
         const folderStructureResponse = await fetch(url + createdFolderId, {
             method: "GET",
