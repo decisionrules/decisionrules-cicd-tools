@@ -89,11 +89,17 @@ async function importSpace(destinationSpaceApiKey, importJsonData) {
 
         // Prepare Move request
         const nodesToMove = FolderStructure.children
-        nodesToMove.forEach(child => {
-            delete child.name
-            delete child.children
-            delete child.baseId
-        })
+        try{
+            nodesToMove.forEach(child => {
+                delete child.name
+                delete child.children
+                delete child.baseId
+            })        
+        } catch (e) {
+            console.log('Bad folder structure')
+            console.log(FolderStructure)
+        }
+
         const moveRequest = {
             targetId: 'root',
             nodes: nodesToMove
