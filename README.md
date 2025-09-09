@@ -62,6 +62,15 @@ node import-space.js file_to_import.json DEST_ENV_URL DEST_SPACE_MANAGEMENT_APIK
 ```
 node import-space.js file_to_import.json https://api.decisionrules.io 4asd654sa65d46sa54d654sa54d6sa5d46sa5d4
 ```
+
+### Compare Spaces
+```
+node compare-spaces.js file_1_to_compare.json file_2_to_compare.json [outputFile.json]
+```
+**example:**
+```
+node compare-space.js export_staging.json export_production.json comparison_result.json
+```
 ## Platform examples:
 
 
@@ -149,4 +158,160 @@ steps:
   cd decisionrules-cicd-tools
   npm run import export/export.json $(${{parameters.destEnv}}_ENV_URL) $(${{parameters.destEnv}}_SPACE_MANAGEMENT_APIKEY)
   displayName: 'Migrating to target project'
+```
+
+
+### Azure DevOps Example with space comparison
+```
+trigger: none
+
+# External parameters of this YAML pipeline
+parameters:
+- name: srcEnv
+  displayName: "Source Environment"
+  type: string
+  default: "TEST"
+  values: [ "PRODUCTION", "TEST" ]
+- name: destEnv
+  displayName: "Target Environment"
+  type: string
+  default: "PRODUCTION"
+  values: [ "PRODUCTION", "TEST" ]
+
+variables:
+- group: dr-var
+
+stages:
+- stage: CompareEnvironments
+  displayName: 'Compare Environments'
+  pool:
+    vmImage: ubuntu-latest
+  jobs:
+  - job: CompareAndExport
+    displayName: 'Export and Compare Spaces'
+    steps:
+    # Get DecisionRules CICD Pipeline tools from Github
+    - script: |
+        git clone https://github.com/decisionrules/decisionrules-cicd-tools.git
+        cd decisionrules-cicd-tools
+        npm install
+      displayName: 'Prepare DecisionRules CICD tools'
+
+    # Create directories
+    - script: |
+        cd decisionrules-cicd-tools
+        mkdir -p export
+        mkdir -p comparison
+      displayName: 'Create directories'
+
+    # Export source environment
+    - script: |
+        cd decisionrules-cicd-tools
+        npm run export export/source_export.json $(${{parameters.srcEnv}}_ENV_URL) $(${{parameters.srcEnv}}_SPACE_MANAGEMENT_APIKEY)
+      displayName: 'Export source environment (${{parameters.srcEnv}})'
+
+    # Export destination environment
+    - script: |
+        cd decisionrules-cicd-tools
+        npm run export export/destination_export.json $(${{parameters.destEnv}}_ENV_URL) $(${{parameters.destEnv}}_SPACE_MANAGEMENT_APIKEY)
+      displayName: 'Export destination environment (${{parameters.destEnv}})'
+
+    # Run comparison
+    - script: |
+        cd decisionrules-cicd-tools
+        echo "======================================"
+        echo "COMPARING ENVIRONMENTS"
+        echo "======================================"
+        echo "Source: ${{parameters.srcEnv}}"
+        echo "Destination: ${{parameters.destEnv}}"
+        echo "======================================"
+        
+        # Run comparison using npm script
+        npm run compare export/source_export.json export/destination_export.json comparison/comparison_results.json
+      displayName: 'Compare spaces'
+
+    # Display comparison results
+    - script: |
+        cd decisionrules-cicd-tools
+        echo ""
+        echo "======================================"
+        echo "COMPARISON RESULTS:"
+        echo "======================================"
+        cat comparison/comparison_results.json | python3 -m json.tool
+        echo "======================================"
+      displayName: 'Display comparison results'
+
+    # Publish artifacts
+    - task: PublishPipelineArtifact@1
+      inputs:
+        targetPath: 'decisionrules-cicd-tools/export/source_export.json'
+        artifact: 'SourceExport'
+      displayName: 'Publish source export'
+
+    - task: PublishPipelineArtifact@1
+      inputs:
+        targetPath: 'decisionrules-cicd-tools/export/destination_export.json'
+        artifact: 'DestinationExport'
+      displayName: 'Publish destination export'
+
+    - task: PublishPipelineArtifact@1
+      inputs:
+        targetPath: 'decisionrules-cicd-tools/comparison/comparison_results.json'
+        artifact: 'ComparisonResults'
+      displayName: 'Publish comparison results'
+
+- stage: Migration
+  displayName: 'Migration (Requires Approval)'
+  dependsOn: CompareEnvironments
+  pool:
+    vmImage: ubuntu-latest
+  jobs:
+  - deployment: MigrateToTarget
+    displayName: 'Migrate to Target Environment'
+    environment: 'DecisionRules-${{parameters.destEnv}}'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          # Get DecisionRules CICD Pipeline tools from Github
+          - script: |
+              git clone https://github.com/decisionrules/decisionrules-cicd-tools.git
+              cd decisionrules-cicd-tools
+              npm install
+            displayName: 'Prepare DecisionRules CICD tools'
+
+          # Download source export artifact
+          - download: current
+            artifact: 'SourceExport'
+            displayName: 'Download source export'
+
+          # Prepare export file
+          - script: |
+              cd decisionrules-cicd-tools
+              mkdir -p export
+              cp "$(Pipeline.Workspace)/SourceExport/source_export.json" export/export.json
+            displayName: 'Prepare export'
+
+          # Clear destination
+          - script: |
+              cd decisionrules-cicd-tools
+              npm run clear $(${{parameters.destEnv}}_ENV_URL) $(${{parameters.destEnv}}_SPACE_MANAGEMENT_APIKEY)
+            displayName: 'Clear destination (${{parameters.destEnv}})'
+
+          # Import to destination
+          - script: |
+              cd decisionrules-cicd-tools
+              npm run import export/export.json $(${{parameters.destEnv}}_ENV_URL) $(${{parameters.destEnv}}_SPACE_MANAGEMENT_APIKEY)
+            displayName: 'Import to destination (${{parameters.destEnv}})'
+
+          # Final message
+          - script: |
+              echo "======================================"
+              echo "✅ MIGRATION COMPLETED"
+              echo "======================================"
+              echo "Source: ${{parameters.srcEnv}}"
+              echo "Destination: ${{parameters.destEnv}}"
+              echo "Timestamp: $(date)"
+              echo "======================================"
+            displayName: 'Migration complete'
 ```
