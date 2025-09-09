@@ -5,7 +5,8 @@
   "scripts": {
     "export": "node export-space.js",
     "import": "node import-space.js",
-    "clear": "node clear-space.js"
+    "clear": "node clear-space.js",
+    "compare": "node compare-spaces.js"
   },
   "keywords": [],
   "author": "DecisionRules.io",
